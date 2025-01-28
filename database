@@ -26,9 +26,9 @@ CREATE TABLE Risks (
 CREATE TABLE Risk_Analysis (
     id SERIAL PRIMARY KEY,
     assessment_id INT REFERENCES Assessments(id) ON DELETE CASCADE,
-    likelihood VARCHAR(50),
-    impact VARCHAR(50),
-    overall_risk_level VARCHAR(50)
+    likelihood INT,
+    impact INT,
+    overall_risk_level INT
 );
 
 -- Tabel Risk_Evaluation
@@ -38,7 +38,7 @@ CREATE TABLE Risk_Evaluation (
     risk_priority TEXT
 );
 
--- Tabel Risk_Treatment
+-- Tabel Risk_Treatmentrisk_analysis
 CREATE TABLE Risk_Treatment (
     id SERIAL PRIMARY KEY,
     assessment_id INT REFERENCES Assessments(id) ON DELETE CASCADE,
