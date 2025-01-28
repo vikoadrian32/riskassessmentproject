@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIST SP 800-30 Risk Assessment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Tampilan keseluruhan */
+        body {
+            background: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* Kartu dan bagian-bagian form */
+        .card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: #1b1b1b;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .form-control, .form-select, .form-label {
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #0062cc;
+            box-shadow: 0 0 5px rgba(0, 98, 204, 0.5);
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+        /* Margin tambahan di bagian bawah */
+        .mb-4 {
+            margin-bottom: 30px;
+        }
+
+        /* Tambahkan styling pada judul form */
+        h1 {
+            font-weight: bold;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+
+        /* Styling untuk setiap card */
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-header, .card-body {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Risk Assessment Form (NIST SP 800-30)</h1>
+        <form action="/submit" method="POST">
+            <!-- Step 1: Context Establishment -->
+            <div class="card mb-4">
+    <div class="card-header">Step 1: Context Establishment</div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label for="assessmentName" class="form-label">Assessment Name</label>
+            <input type="text" class="form-control" id="assessmentName" name="assessmentName" placeholder="Enter assessment name" required>
+        </div>
+        <div class="mb-3">
+            <label for="assessmentPurpose" class="form-label">Purpose of Assessment</label>
+            <textarea class="form-control" id="assessmentPurpose" name="assessmentPurpose" rows="3" placeholder="Enter the purpose of the risk assessment" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="scope" class="form-label">Scope</label>
+            <textarea class="form-control" id="scope" name="scope" rows="3" placeholder="Describe the scope (systems, locations, etc.)" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="evaluationCriteria" class="form-label">Evaluation Criteria</label>
+            <input type="text" class="form-control" id="evaluationCriteria" name="evaluationCriteria" placeholder="Confidentiality, Integrity, Availability" required>
+        </div>
+        <div class="mb-3">
+            <label for="acceptanceCriteria" class="form-label">Acceptance Criteria</label>
+            <textarea class="form-control" id="acceptanceCriteria" name="acceptanceCriteria" rows="3" placeholder="Describe risk acceptance criteria" required></textarea>
+        </div>
+
+        <!-- New Fields for Owner and Department -->
+        <div class="mb-3">
+            <label for="owner" class="form-label">Owner</label>
+            <input type="text" class="form-control" id="owner" name="owner" placeholder="Enter the owner of the assessment" required>
+        </div>
+
+        <!-- Department Dropdown -->
+        <div class="mb-3">
+            <label for="department" class="form-label">Department</label>
+            <select class="form-select" id="department" name="department" required onchange="toggleOtherDepartment()">
+                <option value="">Select a department</option>
+                <option value="IT">IT</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <!-- Other Department Input (visible only if 'Other' is selected) -->
+        <div class="mb-3" id="otherDepartmentDiv" style="display:none;">
+            <label for="otherDepartment" class="form-label">Other Department</label>
+            <input type="text" class="form-control" id="otherDepartment" name="otherDepartment" placeholder="Enter your department">
+        </div>
+    </div>
+</div>
+
+            <!-- Step 2: Risk Identification -->
+            <div class="card mb-4">
+                <div class="card-header">Step 2: Risk Identification</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="assets" class="form-label">Assets</label>
+                        <textarea class="form-control" id="assets" name="assets" rows="3" placeholder="List assets (e.g., data, hardware, software)" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="threatSources" class="form-label">Threat Sources</label>
+                        <textarea class="form-control" id="threatSources" name="threatSources" rows="3" placeholder="List threat sources (e.g., hackers, natural disasters)" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="threatEvents" class="form-label">Threat Events</label>
+                        <textarea class="form-control" id="threatEvents" name="threatEvents" rows="3" placeholder="List potential threat events" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vulnerabilities" class="form-label">Vulnerabilities</label>
+                        <textarea class="form-control" id="vulnerabilities" name="vulnerabilities" rows="3" placeholder="List identified vulnerabilities" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Risk Analysis -->
+            <div class="card mb-4">
+                <div class="card-header">Step 3: Risk Analysis</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="likelihood" class="form-label">Likelihood</label>
+                        <select class="form-select" id="likelihood" name="likelihood" required>
+                            <option value="">Select likelihood</option>
+                            <option value="very_low">Very Low</option>
+                            <option value="low">Low</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="high">High</option>
+                            <option value="very_high">Very High</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="impact" class="form-label">Impact</label>
+                        <select class="form-select" id="impact" name="impact" required>
+                            <option value="">Select impact</option>
+                            <option value="negligible">Negligible</option>
+                            <option value="limited">Limited</option>
+                            <option value="serious">Serious</option>
+                            <option value="major">Major</option>
+                            <option value="catastrophic">Catastrophic</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="overallRiskLevel" class="form-label">Overall Risk Level</label>
+                        <input type="text" class="form-control" id="overallRiskLevel" name="overallRiskLevel" placeholder="Enter overall risk level (e.g., high, medium, low)" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Risk Evaluation -->
+            <div class="card mb-4">
+                <div class="card-header">Step 4: Risk Evaluation</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="riskPriority" class="form-label">Risk Priority</label>
+                        <textarea class="form-control" id="riskPriority" name="riskPriority" rows="3" placeholder="Describe risk priority (e.g., high, medium, low)" required></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Risk Treatment -->
+            <div class="card mb-4">
+                <div class="card-header">Step 5: Risk Treatment</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="mitigationStrategy" class="form-label">Mitigation Strategy</label>
+                        <textarea class="form-control" id="mitigationStrategy" name="mitigationStrategy" rows="3" placeholder="Describe the mitigation strategy" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mitigationSteps" class="form-label">Mitigation Steps</label>
+                        <textarea class="form-control" id="mitigationSteps" name="mitigationSteps" rows="3" placeholder="List the steps for mitigation" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timeline" class="form-label">Timeline</label>
+                        <input type="date" class="form-control" id="timeline" name="timeline" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-success">Submit</button>
+        </form>
+    </div>
+
+<!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>-->
+    <script>
+    function toggleOtherDepartment() {
+        var department = document.getElementById("department").value;
+        var otherDepartmentDiv = document.getElementById("otherDepartmentDiv");
+
+        if (department === "Other") {
+            otherDepartmentDiv.style.display = "block";
+        } else {
+            otherDepartmentDiv.style.display = "none";
+        }
+    }
+    </script>
+</body>
+</html>

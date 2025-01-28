@@ -1,0 +1,48 @@
+-- Tabel Assessments
+CREATE TABLE Assessments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    purpose TEXT,
+    scope TEXT,
+    evaluation_criteria TEXT,
+    acceptance_criteria TEXT,
+    owner VARCHAR(255),
+    department VARCHAR(255),
+    other_department VARCHAR(255), -- Untuk departemen lain jika "Other"
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabel Risks
+CREATE TABLE Risks (
+    id SERIAL PRIMARY KEY,
+    assessment_id INT REFERENCES Assessments(id) ON DELETE CASCADE,
+    assets TEXT,
+    threat_sources TEXT,
+    threat_events TEXT,
+    vulnerabilities TEXT
+);
+
+-- Tabel Risk_Analysis
+CREATE TABLE Risk_Analysis (
+    id SERIAL PRIMARY KEY,
+    assessment_id INT REFERENCES Assessments(id) ON DELETE CASCADE,
+    likelihood VARCHAR(50),
+    impact VARCHAR(50),
+    overall_risk_level VARCHAR(50)
+);
+
+-- Tabel Risk_Evaluation
+CREATE TABLE Risk_Evaluation (
+    id SERIAL PRIMARY KEY,
+    assessment_id INT REFERENCES Assessments(id) ON DELETE CASCADE,
+    risk_priority TEXT
+);
+
+-- Tabel Risk_Treatment
+CREATE TABLE Risk_Treatment (
+    id SERIAL PRIMARY KEY,
+    assessment_id INT REFERENCES Assessments(id) ON DELETE CASCADE,
+    mitigation_strategy TEXT,
+    mitigation_steps TEXT,
+    timeline DATE
+);
