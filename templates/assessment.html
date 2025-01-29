@@ -7,10 +7,52 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* Tampilan keseluruhan */
         body {
-            background: #f8f9fa;
-            font-family: 'Arial', sans-serif;
+            background-color: #111;
+            color: #8fd6a8;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .form-label {
+            color: #8fd6a8;
+        }
+
+        .form-control {
+            background-color: #333;
+            border: #00c28c solid 1px;
+            color: white;
+        }
+
+        .form-control:focus {
+            border-color: #00e5b6;
+            background-color: #333;
+            color: white;
+            box-shadow: 0 0 5px rgba(0, 229, 182, 0.5);
+        }
+
+        .form-select {
+            background-color: #333;
+            border: #00c28c solid 1px;
+            color: white;
+        }
+
+        .form-select:focus {
+            background-color: #333;
+            border: #00c28c solid 1px;
+            color: white;
+        }
+
+        /* Navbar Styling */
+        nav {
+            background-color: #1b1b1b;
+        }
+        
+        .navbar-brand, .nav-link {
+            color: #8fd6a8 !important;
+        }
+
+        .nav-link:hover {
+            color: #ffdf47 !important;
         }
 
         /* Kartu dan bagian-bagian form */
@@ -18,13 +60,17 @@
             border-radius: 10px;
             border: none;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #222;
         }
 
         .card-header {
-            background-color: #1b1b1b;
-            color: #fff;
+            background-color: #333;
+            color: #8fd6a8;
             font-weight: bold;
-            font-size: 1.2rem;
+        }
+
+        .card-body {
+            padding: 20px;
         }
 
         .form-control, .form-select, .form-label {
@@ -34,13 +80,13 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #0062cc;
-            box-shadow: 0 0 5px rgba(0, 98, 204, 0.5);
+            border-color: #00e5b6;
+            box-shadow: 0 0 5px rgba(0, 229, 182, 0.5);
         }
 
         .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
+            background-color: #00e5b6;
+            border-color: #00e5b6;
             font-size: 1.1rem;
             padding: 12px 20px;
             border-radius: 8px;
@@ -48,29 +94,29 @@
         }
 
         .btn-success:hover {
-            background-color: #218838;
-            border-color: #1e7e34;
+            background-color: #00c28c;
+            border-color: #00a378;
         }
 
-        /* Margin tambahan di bagian bawah */
         .mb-4 {
             margin-bottom: 30px;
         }
 
-        /* Tambahkan styling pada judul form */
         h1 {
             font-weight: bold;
-            color: #343a40;
+            color: #8fd6a8;
             margin-bottom: 20px;
         }
 
-        /* Styling untuk setiap card */
-        .card-body {
-            padding: 20px;
+        /* Menambahkan styling untuk back button */
+        .btn-secondary {
+            background-color: #555;
+            border-color: #555;
         }
 
-        .card-header, .card-body {
-            border-radius: 10px;
+        .btn-secondary:hover {
+            background-color: #777;
+            border-color: #777;
         }
     </style>
 </head>
@@ -98,7 +144,7 @@
         </div>
     </nav>
     <div class="container my-5">
-        <a href="/" class="btn btn-secondary mt-3">Back to Home</a>
+        <a href="/" class="btn btn-secondary my-3">Back to Home</a>
         <h1 class="text-center mb-4">Risk Assessment Form (NIST SP 800-30)</h1>
         <form action="/submit" method="POST">
             <!-- Step 1: Context Establishment -->

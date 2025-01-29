@@ -9,7 +9,9 @@
     
     <style>
         body {
-            background-color: #333;
+            background-color: #111;
+            color: #8fd6a3; /* Neon green for hacker vibe */
+            font-family: 'Courier New', Courier, monospace;
         }
         .container {
             margin-top: 50px;
@@ -17,60 +19,91 @@
         .table th, .table td {
             vertical-align: middle;
             text-align: center;
+            color: #8fd6a3;
         }
         .table tr {
             transition: background-color 0.3s ease;
         }
         .table tr:hover {
-            background-color: #f1f1f1;
+            background-color: #333;
         }
         .alert {
             margin-top: 20px;
+            background-color: #222;
+            color: #8fd6a3;
+            border: 1px solid #a8e6b7;
+        }
+        .btn-primary {
+            background-color: #8fd6a3;
+            color: black;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: 1px solid #8fd6a3;
+        }
+        .btn-primary:hover {
+            background-color: #00cc00;
+            color: white;
+            transform: scale(1.05);
+        }
+        .form-control {
+            background-color: #333;
+            color: #8fd6a3;
+            border: 1px solid #8fd6a3;
+            transition: box-shadow 0.3s ease;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            border-color: #8fd6a3;
+            background-color: #333;
+            color: white;
+        }
+        .card {
+            background-color: #222;
+            border: 1px solid #8fd6a3;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            background-color: #333;
+        }
+        .navbar {
+            background-color: #000;
+        }
+        .navbar-brand {
+            color: #8fd6a3;
+        }
+        .navbar-toggler-icon {
+            background-color: #8fd6a3;
+        }
+        .navbar-nav .nav-link {
+            color: #8fd6a3 !important;
         }
         .harmless {
-            background-color: #28a745;  /* Green for harmless */
+            background-color: #28a745;
             color: white;
             font-weight: bold;
         }
         .undetected {
-            background-color: #17a2b8;  /* Blue for undetected */
+            background-color: #17a2b8;
             color: white;
             font-weight: bold;
         }
         .malicious {
-            background-color: #dc3545;  /* Red for malicious */
+            background-color: #dc3545;
             color: white;
             font-weight: bold;
         }
         .suspicious {
-            background-color: #ffc107;  /* Yellow for suspicious */
+            background-color: #ffc107;
             color: black;
             font-weight: bold;
         }
-        .btn-primary {
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            transform: scale(1.05);
-        }
-        .form-control {
-            transition: box-shadow 0.3s ease;
-        }
-        .form-control:focus {
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
-        }
-        .card {
-            transition: transform 0.3s ease;
-        }
-        .card:hover {
-            transform: scale(1.02);
+        .modal .modal-content {
+            background-color: #222;
         }
     </style>
 </head>
 <body>
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand m-2" href="#"><strong>VirusTotal Threat Intelligence</strong></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +113,6 @@
 </nav>
 <div class="container">
     <a href="/" class="btn btn-secondary mt-3">Back to Home</a>
-    <!-- <h2 class="text-center mb-4">VirusTotal Analysis</h2> -->
 
     <!-- VirusTotal Function Explanation and Brief Instructions -->
     <div class="alert alert-info">
@@ -119,21 +151,64 @@
             <div class="card mt-4 shadow">
                 <div class="card-body">
                     <h5 class="card-title text-center">Analysis Results</h5>
-                    <table class="table table-striped table-bordered">
+                    <table class="table table-bordered mt-4">
                         <thead>
                             <tr>
                                 <th>Engine</th>
                                 <th>Verdict</th>
-                                <th>Scan Date</th>
+                                <th>Additional Information</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for engine, result in threats.data.attributes.last_analysis_results.items() %}
-                                <tr class="{% if result.category == 'harmless' %}harmless{% elif result.category == 'undetected' %}undetected{% elif result.category == 'malicious' %}malicious{% elif result.category == 'suspicious' %}suspicious{% else %}undetected{% endif %}">
-                                    <td>{{ result.engine_name }}</td>
-                                    <td>{{ result.category | capitalize }}</td>
-                                    <td>{{ result.scan_date }}</td>
-                                </tr>
+                            {% for engine, details in threats['data']['attributes']['last_analysis_results'].items() %}
+                            <tr>
+                                <td>{{ engine }}</td>
+                                <td>{{ details['category'] }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#engineInfoModal{{ loop.index }}">
+                                        Engine Info
+                                    </button>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#verdictInfoModal{{ loop.index }}">
+                                        Verdict Info
+                                    </button>
+                                </td>
+                            </tr>
+            
+                            <!-- Modal for Engine Information -->
+                            <div class="modal fade" id="engineInfoModal{{ loop.index }}" tabindex="-1" aria-labelledby="engineInfoModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="engineInfoModalLabel">Engine Information</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>The engine {{ engine }} is a security tool used to detect and analyze potential threats in files or URLs. It uses its own detection methods, signature databases, and analysis techniques to identify possible malware or suspicious activity. The result from this engine can help determine the overall verdict on the sample.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+            
+                            <!-- Modal for Verdict Information -->
+                            <div class="modal fade" id="verdictInfoModal{{ loop.index }}" tabindex="-1" aria-labelledby="verdictInfoModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="verdictInfoModalLabel">Verdict Information</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>The verdict given by the engine (Clean, Suspicious, or Malicious) is the result of the analysis of the file or URL. If the verdict is 'Clean', the sample is generally safe. If the verdict is 'Malicious', the sample is considered harmful, and action should be taken to avoid it. If the verdict is 'Suspicious', the sample might be harmful, but it needs further analysis to confirm.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -142,6 +217,12 @@
         {% endif %}
     {% endif %}
 </div>
+<script>
+    // Tooltip functionality (optional)
+    $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
 </body>
