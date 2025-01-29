@@ -8,6 +8,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     
     <style>
+        body {
+            background-color: #333;
+        }
         .container {
             margin-top: 50px;
         }
@@ -78,12 +81,29 @@
 <div class="container">
     <a href="/" class="btn btn-secondary mt-3">Back to Home</a>
     <!-- <h2 class="text-center mb-4">VirusTotal Analysis</h2> -->
+
+    <!-- VirusTotal Function Explanation and Brief Instructions -->
+    <div class="alert alert-info">
+        <strong>Welcome to VirusTotal Analysis Tool!</strong><br>
+        <p>
+            VirusTotal allows you to check whether a URL or file hash you submit contains potential threats such as viruses, malware, or phishing by using various antivirus engines. This application sends the URL or file hash to the VirusTotal API and displays the analysis results.
+        </p>
+        <p><strong>How to Use:</strong></p>
+        <ol>
+            <li>Enter the URL or file hash you want to check in the provided field.</li>
+            <li>Click the "Submit" button.</li>
+            <li>The analysis results will be displayed below the input form, indicating whether the URL or file is detected as malicious, harmless, or otherwise.</li>
+        </ol>
+        <p><strong>Note:</strong> If any results are detected as <strong>malicious</strong>, this page will visually alert you with a red background.</p>
+        <p>For more details on how VirusTotal works and to explore additional features, visit <a href="https://www.virustotal.com" target="_blank">VirusTotal Official Website</a>.</p>
+    </div>
+
     <form action="/virustotal" method="POST">
         <div class="my-3">
-            <label for="url" class="form-label fw-bold">Enter URL or Hash:</label>
+            <label for="url" class="form-label fw-bold text-white">Enter URL or Hash:</label>
             <input type="text" class="form-control" id="url" name="url" placeholder="Enter URL or file hash" required>
         </div>
-        <button type="submit" class="btn btn-primary btn-block w-100">Submit <i class="fas fa-search"></i></button>
+        <button type="submit" class="btn btn-primary btn-block w-100"><i class="fas fa-search"></i> Scan</button>
     </form>
 
     {% if threats %}
