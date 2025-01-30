@@ -6,7 +6,10 @@ from dash import Dash, dcc, html
 import plotly.express as px
 import pandas as pd
 import plotly.io as pio
-from pymisp import PyMISP
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Flask app initialization
 app = Flask(__name__)
@@ -22,8 +25,8 @@ def add_header(response):
 
 
 # VirusTotal Configuration
-API_KEY = '732f52763f6495a40edf2edff2787fb6dd1d04a5b7761361b8d64233aac7f9eb'
-VT_API_URL = 'https://www.virustotal.com/api/v3/'
+API_KEY = os.environ.get('API_KEY')
+VT_API_URL = os.environ.get('VT_API_URL')
 
 # MySQL Connection
 conn = mysql.connector.connect(
