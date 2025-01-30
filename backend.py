@@ -33,7 +33,7 @@ conn = mysql.connector.connect(
     host="127.0.0.1",
     port="3306",
     user="root",
-    password="",
+    password="herosenin123",
     database="riskassessment"
 )
 cursor = conn.cursor()
@@ -317,7 +317,26 @@ def dashboard():
     df['Impact'] = df['Impact'].astype(int)
     df['Risk Level'] = df['Impact'] * df['Likelihood']
 
-    # Enhanced visualizations
+    dark_template = dict(
+        layout=dict(
+            paper_bgcolor='#1a1a1a',
+            plot_bgcolor='#1a1a1a',
+            font=dict(color='#8fd6a3'),
+            title=dict(font=dict(color='#8fd6a3')),
+            xaxis=dict(
+                gridcolor='#2d2d2d',
+                zerolinecolor='#2d2d2d',
+                tickfont=dict(color='#8fd6a3')
+            ),
+            yaxis=dict(
+                gridcolor='#2d2d2d',
+                zerolinecolor='#2d2d2d',
+                tickfont=dict(color='#8fd6a3')
+            )
+        )
+    )
+
+    # Create heatmap with dark theme
     heatmap_fig = px.scatter(
         df,
         x='Impact',
@@ -325,24 +344,30 @@ def dashboard():
         color='Risk Level',
         hover_data=['Assessment ID', 'Project Name'],
         title="Risk Heatmap",
-        template="plotly_white"
     )
     heatmap_fig.update_layout(
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        font={'size': 14}
+        dark_template['layout'],
+        coloraxis_colorbar=dict(
+            tickfont=dict(color='#8fd6a3'),
+            title=dict(font=dict(color='#8fd6a3'))
+        )
     )
 
+    # Create pie chart with dark theme
     pie_fig = px.pie(
         df,
         names='Risk Level',
         title="Risk Distribution",
-        hover_data=['Assessment ID', 'Project Name'],
-        template="plotly_white"
+        hover_data=['Project Name'],
+        custom_data=['Project Name']
     )
     pie_fig.update_layout(
-        showlegend=True,
-        font={'size': 14}
+        dark_template['layout'],
+        legend=dict(
+            font=dict(color='#8fd6a3'),
+            bgcolor='#1a1a1a',
+            bordercolor='#2d2d2d'
+        )
     )
 
     return render_template(
