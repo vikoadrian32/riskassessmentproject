@@ -228,57 +228,60 @@
         <a href="/" class="btn btn-secondary my-3">Back to Home</a>
         <h1 class="text-center mb-4">Risk Assessment Form (NIST SP 800-30)</h1>
         <form action="/submit" method="POST">
+            {% if assessment %}
+                <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
+            {% endif %}
             <!-- Step 1: Context Establishment -->
             <div class="card mb-4">
-    <div class="card-header">Step 1: Context Establishment</div>
-    <div class="card-body">
-        <div class="mb-3">
-            <label for="assessmentName" class="form-label">Assessment Name</label>
-            <input type="text" class="form-control" id="assessmentName" name="assessmentName" placeholder="Enter assessment name" required>
-        </div>
-        <div class="mb-3">
-            <label for="assessmentPurpose" class="form-label">Purpose of Assessment</label>
-            <textarea class="form-control" id="assessmentPurpose" name="assessmentPurpose" rows="3" placeholder="Enter the purpose of the risk assessment" required></textarea>
-        </div>
-        <div class="mb-3">
-            <label for="scope" class="form-label">Scope</label>
-            <textarea class="form-control" id="scope" name="scope" rows="3" placeholder="Describe the scope (systems, locations, etc.)" required></textarea>
-        </div>
-        <div class="mb-3">
-            <label for="evaluationCriteria" class="form-label">Evaluation Criteria</label>
-            <input type="text" class="form-control" id="evaluationCriteria" name="evaluationCriteria" placeholder="Confidentiality, Integrity, Availability" required>
-        </div>
-        <div class="mb-3">
-            <label for="acceptanceCriteria" class="form-label">Acceptance Criteria</label>
-            <textarea class="form-control" id="acceptanceCriteria" name="acceptanceCriteria" rows="3" placeholder="Describe risk acceptance criteria" required></textarea>
-        </div>
+            <div class="card-header">Step 1: Context Establishment</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="assessmentName" class="form-label">Assessment Name</label>
+                    <input type="text" class="form-control" id="assessmentName" value="{{ assessment.name if assessment else '' }}" name="assessmentName" placeholder="Enter assessment name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="assessmentPurpose" class="form-label">Purpose of Assessment</label>
+                    <textarea class="form-control" id="assessmentPurpose" name="assessmentPurpose" rows="3" placeholder="Enter the purpose of the risk assessment" required>{{ assessment.purpose if assessment else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="scope" class="form-label">Scope</label>
+                    <textarea class="form-control" id="scope" name="scope" rows="3" placeholder="Describe the scope (systems, locations, etc.)" required>{{ assessment.scope if assessment else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="evaluationCriteria" class="form-label">Evaluation Criteria</label>
+                    <input type="text" class="form-control" value="{{ assessment.evaluation_criteria if assessment else '' }}" id="evaluationCriteria" name="evaluationCriteria" placeholder="Confidentiality, Integrity, Availability" required>
+                </div>
+                <div class="mb-3">
+                    <label for="acceptanceCriteria" class="form-label">Acceptance Criteria</label>
+                    <textarea class="form-control" id="acceptanceCriteria" name="acceptanceCriteria" rows="3" placeholder="Describe risk acceptance criteria" required>{{ assessment.acceptance_criteria if assessment else '' }}</textarea>
+                </div>
 
-        <!-- New Fields for Owner and Department -->
-        <div class="mb-3">
-            <label for="owner" class="form-label">Owner</label>
-            <input type="text" class="form-control" id="owner" name="owner" placeholder="Enter the owner of the assessment" required>
-        </div>
+                <!-- New Fields for Owner and Department -->
+                <div class="mb-3">
+                    <label for="owner" class="form-label">Owner</label>
+                    <input type="text" class="form-control" id="owner" name="owner" value="{{ assessment.owner if assessment else '' }}" placeholder="Enter the owner of the assessment" required>
+                </div>
 
-        <!-- Department Dropdown -->
-        <div class="mb-3">
-            <label for="department" class="form-label">Department</label>
-            <select class="form-select" id="department" name="department" required onchange="toggleOtherDepartment()">
-                <option value="">Select a department</option>
-                <option value="IT">IT</option>
-                <option value="HR">HR</option>
-                <option value="Finance">Finance</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
+                <!-- Department Dropdown -->
+                <div class="mb-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select class="form-select" id="department" name="department" required onchange="toggleOtherDepartment()">
+                        <option value="">Select a department</option>
+                        <option value="IT">IT</option>
+                        <option value="HR">HR</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
 
-        <!-- Other Department Input (visible only if 'Other' is selected) -->
-        <div class="mb-3" id="otherDepartmentDiv" style="display:none;">
-            <label for="otherDepartment" class="form-label">Other Department</label>
-            <input type="text" class="form-control" id="otherDepartment" name="otherDepartment" placeholder="Enter your department">
-        </div>
+                <!-- Other Department Input (visible only if 'Other' is selected) -->
+                <div class="mb-3" id="otherDepartmentDiv" style="display:none;">
+                    <label for="otherDepartment" class="form-label">Other Department</label>
+                    <input type="text" class="form-control" id="otherDepartment" name="otherDepartment" placeholder="Enter your department">
+                </div>
+            </div>
     </div>
-</div>
 
             <!-- Step 2: Risk Identification -->
             <div class="card mb-4">
@@ -286,19 +289,19 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label for="assets" class="form-label">Assets</label>
-                        <textarea class="form-control" id="assets" name="assets" rows="3" placeholder="List assets (e.g., data, hardware, software)" required></textarea>
+                        <textarea class="form-control" id="assets"  name="assets" rows="3" placeholder="List assets (e.g., data, hardware, software)" required>{{ assessment.assets if assessment else '' }}</textarea>
                     </div>
                     <div class="mb-3">
                         <label for="threatSources" class="form-label">Threat Sources</label>
-                        <textarea class="form-control" id="threatSources" name="threatSources" rows="3" placeholder="List threat sources (e.g., hackers, natural disasters)" required></textarea>
+                        <textarea class="form-control" id="threatSources" name="threatSources" rows="3" placeholder="List threat sources (e.g., hackers, natural disasters)" required>{{ assessment.threat_sources if assessment else '' }}</textarea>
                     </div>
                     <div class="mb-3">
                         <label for="threatEvents" class="form-label">Threat Events</label>
-                        <textarea class="form-control" id="threatEvents" name="threatEvents" rows="3" placeholder="List potential threat events" required></textarea>
+                        <textarea class="form-control" id="threatEvents" name="threatEvents" rows="3" placeholder="List potential threat events" required>{{ assessment.threat_events if assessment else '' }}</textarea>
                     </div>
                     <div class="mb-3">
                         <label for="vulnerabilities" class="form-label">Vulnerabilities</label>
-                        <textarea class="form-control" id="vulnerabilities" name="vulnerabilities" rows="3" placeholder="List identified vulnerabilities" required></textarea>
+                        <textarea class="form-control" id="vulnerabilities" name="vulnerabilities" rows="3" placeholder="List identified vulnerabilities" required>{{ assessment.vulnerabilities if assessment else '' }}</textarea>
                     </div>
                 </div>
             </div>
@@ -342,7 +345,7 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label for="riskPriority" class="form-label">Risk Priority</label>
-                        <textarea class="form-control" id="riskPriority" name="riskPriority" rows="3" placeholder="Describe risk priority (e.g., high, medium, low)" required></textarea>
+                        <textarea class="form-control" id="riskPriority" name="riskPriority" rows="3" placeholder="Describe risk priority (e.g., high, medium, low)" required>{{ assessment.risk_priority if assessment else '' }}</textarea>
                     </div>
                 </div>
             </div>
@@ -353,11 +356,11 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label for="mitigationStrategy" class="form-label">Mitigation Strategy</label>
-                        <textarea class="form-control" id="mitigationStrategy" name="mitigationStrategy" rows="3" placeholder="Describe the mitigation strategy" required></textarea>
+                        <textarea class="form-control" id="mitigationStrategy" name="mitigationStrategy" rows="3" placeholder="Describe the mitigation strategy" required>{{ assessment.mitigation_strategy if assessment else '' }}</textarea>
                     </div>
                     <div class="mb-3">
                         <label for="mitigationSteps" class="form-label">Mitigation Steps</label>
-                        <textarea class="form-control" id="mitigationSteps" name="mitigationSteps" rows="3" placeholder="List the steps for mitigation" required></textarea>
+                        <textarea class="form-control" id="mitigationSteps" name="mitigationSteps" rows="3" placeholder="List the steps for mitigation" required>{{ assessment.mitigation_steps if assessment else '' }}</textarea>
                     </div>
                     <div class="mb-3">
                         <label for="timeline" class="form-label">Timeline</label>
@@ -367,7 +370,7 @@
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" class="btn btn-success">Submit</button>
+            <button type="submit" class="btn btn-success"> {% if assessment %}Update{% else %}Submit{% endif %}</button>
 
             <button type="button" id="cancelEditBtn" class="btn btn-secondary mt-3" style="display:none;">
                 Cancel Edit
