@@ -1,0 +1,29 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Editor/IDE Files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Python Dependency Files
+pip-log.txt
+pip-delete-this-directory.txt
+Pipfile
+Pipfile.lock
+poetry.lock
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
