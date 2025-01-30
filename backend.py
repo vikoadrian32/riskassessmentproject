@@ -44,18 +44,18 @@ conn = mysql.connector.connect(
     host="127.0.0.1",
     port="3306",
     user="root",
-    password="",
+    password="herosenin123",
     database="riskassessment"
 )
 cursor = conn.cursor()
 
 # Risk mappings
 likelihood_mapping = {
-    'very low': 0,
+    'very_low': 0,
     'low': 1,
-    'medium': 2,
+    'moderate': 2,
     'high': 3,
-    'very high': 4
+    'very_high': 4
 }
 
 impact_mapping = {
@@ -64,6 +64,22 @@ impact_mapping = {
     'serious': 2,
     'major': 3,
     'catastrophic': 4
+}
+
+reverse_likelihood_mapping = {
+    0: 'very_low',
+    1: 'low',
+    2: 'moderate',
+    3: 'high',
+    4: 'very_high'
+}
+
+reverse_impact_mapping = {
+    0: 'negligible',
+    1: 'limited',
+    2: 'serious',
+    3: 'major',
+    4: 'catastrophic'
 }
 
 
@@ -136,24 +152,29 @@ dash_app.layout = html.Div([
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
     try:
-        # Ambil data dari database
+        # Ambil assessment_id dari form
+        assessment_id = request.form.get('assessment_id')
+
+        # Modifikasi query untuk mengambil data spesifik assessment
         cursor.execute("""
-            SELECT a.name, a.purpose, a.scope, a.owner, a.department,
-                   r.assets, r.threat_sources, r.threat_events, r.vulnerabilities,
-                   ra.likelihood, ra.impact, ra.overall_risk_level,
-                   rt.mitigation_strategy, rt.mitigation_steps, rt.timeline
-            FROM Assessments a
-            JOIN Risks r ON a.id = r.assessment_id
-            JOIN Risk_Analysis ra ON a.id = ra.assessment_id
-            JOIN Risk_Treatment rt ON a.id = rt.assessment_id
-        """)
+                   SELECT a.name, a.purpose, a.scope, a.owner, a.department,
+                          r.assets, r.threat_sources, r.threat_events, r.vulnerabilities,
+                          ra.likelihood, ra.impact, ra.overall_risk_level,
+                          rt.mitigation_strategy, rt.mitigation_steps, rt.timeline
+                   FROM Assessments a
+                   JOIN Risks r ON a.id = r.assessment_id
+                   JOIN Risk_Analysis ra ON a.id = ra.assessment_id
+                   JOIN Risk_Treatment rt ON a.id = rt.assessment_id
+                   WHERE a.id = %s
+               """, (assessment_id,))
         assessments = cursor.fetchall()
 
-        # Ambil data untuk risk heatmap dan distribution
+        # Query untuk risk heatmap dan distribution juga difilter
         cursor.execute("""
-            SELECT likelihood, impact, overall_risk_level 
-            FROM Risk_Analysis
-        """)
+                   SELECT likelihood, impact, overall_risk_level 
+                   FROM Risk_Analysis
+                   WHERE assessment_id = %s
+               """, (assessment_id,))
         risk_data = cursor.fetchall()
 
         # Buat DataFrame untuk visualisasi
@@ -251,10 +272,10 @@ def generate_pdf():
         story.append(Spacer(1, 12))
 
         # Tambahkan ringkasan statistik
-        story.append(Paragraph("Risk Statistics", styles['Heading2']))
-        risk_stats = df_risk['Risk Level'].value_counts()
-        for level, count in risk_stats.items():
-            story.append(Paragraph(f"{level} Risks: {count}", styles['Normal']))
+        # story.append(Paragraph("Risk Statistics", styles['Heading2']))
+        # risk_stats = df_risk['Risk Level'].value_counts()
+        # for level, count in risk_stats.items():
+        #     story.append(Paragraph(f"{level} Risks: {count}", styles['Normal']))
 
         # Build PDF
         doc.build(story)
@@ -306,6 +327,9 @@ def api_threats():
 def submit():
     try:
         # Extract form data
+        assessment_id = request.form.get('assessment_id')
+        is_update = assessment_id is not None and assessment_id != ''
+
         assessment_name = request.form['assessmentName']
         purpose = request.form['assessmentPurpose']
         scope = request.form['scope']
@@ -332,55 +356,180 @@ def submit():
         mitigation_steps = request.form['mitigationSteps']
         timeline = request.form['timeline']
 
-        # Database operations
-        cursor.execute(
-            """
-            INSERT INTO Assessments (name, purpose, scope, evaluation_criteria, acceptance_criteria, owner, department, other_department)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (assessment_name, purpose, scope, evaluation_criteria, acceptance_criteria, owner, department,
-             other_department)
-        )
-        assessment_id = cursor.lastrowid
+        if is_update:
+            # Update existing assessment
+            cursor.execute(
+                """
+                UPDATE Assessments 
+                SET name=%s, purpose=%s, scope=%s, evaluation_criteria=%s, 
+                    acceptance_criteria=%s, owner=%s, department=%s, other_department=%s
+                WHERE id=%s
+                """,
+                (assessment_name, purpose, scope, evaluation_criteria,
+                 acceptance_criteria, owner, department, other_department, assessment_id)
+            )
 
-        cursor.execute(
-            """
-            INSERT INTO Risks (assessment_id, assets, threat_sources, threat_events, vulnerabilities)
-            VALUES (%s, %s, %s, %s, %s)
-            """,
-            (assessment_id, assets, threat_sources, threat_events, vulnerabilities)
-        )
+            cursor.execute(
+                """
+                UPDATE Risks 
+                SET assets=%s, threat_sources=%s, threat_events=%s, vulnerabilities=%s
+                WHERE assessment_id=%s
+                """,
+                (assets, threat_sources, threat_events, vulnerabilities, assessment_id)
+            )
 
-        cursor.execute(
-            """
-            INSERT INTO Risk_Analysis (assessment_id, likelihood, impact, overall_risk_level)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (assessment_id, likelihood_value, impact_value, overall_risk_level)
-        )
+            cursor.execute(
+                """
+                UPDATE Risk_Analysis 
+                SET likelihood=%s, impact=%s, overall_risk_level=%s
+                WHERE assessment_id=%s
+                """,
+                (likelihood_value, impact_value, overall_risk_level, assessment_id)
+            )
 
-        cursor.execute(
-            """
-            INSERT INTO Risk_Evaluation (assessment_id, risk_priority)
-            VALUES (%s, %s)
-            """,
-            (assessment_id, risk_priority)
-        )
+            cursor.execute(
+                """
+                UPDATE Risk_Evaluation 
+                SET risk_priority=%s
+                WHERE assessment_id=%s
+                """,
+                (risk_priority, assessment_id)
+            )
 
-        cursor.execute(
-            """
-            INSERT INTO Risk_Treatment (assessment_id, mitigation_strategy, mitigation_steps, timeline)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (assessment_id, mitigation_strategy, mitigation_steps, timeline)
-        )
+            cursor.execute(
+                """
+                UPDATE Risk_Treatment 
+                SET mitigation_strategy=%s, mitigation_steps=%s, timeline=%s
+                WHERE assessment_id=%s
+                """,
+                (mitigation_strategy, mitigation_steps, timeline, assessment_id)
+            )
 
-        conn.commit()
-        return redirect(f'/result?assessment_id={assessment_id}')
+            conn.commit()
+            return redirect(f'/result?assessment_id={assessment_id}')
+
+        else:
+            # Insert new assessment if it's not an update
+            cursor.execute(
+                """
+                INSERT INTO Assessments (name, purpose, scope, evaluation_criteria, acceptance_criteria, owner, department, other_department)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (assessment_name, purpose, scope, evaluation_criteria, acceptance_criteria, owner, department,
+                 other_department)
+            )
+            assessment_id = cursor.lastrowid
+
+            cursor.execute(
+                """
+                INSERT INTO Risks (assessment_id, assets, threat_sources, threat_events, vulnerabilities)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (assessment_id, assets, threat_sources, threat_events, vulnerabilities)
+            )
+
+            cursor.execute(
+                """
+                INSERT INTO Risk_Analysis (assessment_id, likelihood, impact, overall_risk_level)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (assessment_id, likelihood_value, impact_value, overall_risk_level)
+            )
+
+            cursor.execute(
+                """
+                INSERT INTO Risk_Evaluation (assessment_id, risk_priority)
+                VALUES (%s, %s)
+                """,
+                (assessment_id, risk_priority)
+            )
+
+            cursor.execute(
+                """
+                INSERT INTO Risk_Treatment (assessment_id, mitigation_strategy, mitigation_steps, timeline)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (assessment_id, mitigation_strategy, mitigation_steps, timeline)
+            )
+
+            conn.commit()
+            return redirect(f'/result?assessment_id={assessment_id}')
 
     except Exception as e:
         conn.rollback()
         return f"Error: {str(e)}"
+
+
+@app.route('/delete_assessment',methods = ['POST'])
+def delete_assessment():
+    assessment_id = request.form['assessment_id']
+    try:
+        cursor.execute("DELETE FROM Risk_Treatment WHERE assessment_id = %s", (assessment_id,))
+        cursor.execute("DELETE FROM Risk_Evaluation WHERE assessment_id = %s", (assessment_id,))
+        cursor.execute("DELETE FROM Risk_Analysis WHERE assessment_id = %s", (assessment_id,))
+        cursor.execute("DELETE FROM Risks WHERE assessment_id = %s", (assessment_id,))
+        cursor.execute("DELETE FROM Assessments WHERE id = %s", (assessment_id,))
+        conn.commit()
+        return redirect(f'/dashboard')
+
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+
+@app.route('/edit_assessment/<int:assessment_id>', methods=['GET'])
+def edit_assessment(assessment_id):
+    try:
+        # Query untuk mengambil semua data assessment
+        cursor.execute("""
+            SELECT 
+                a.id, a.name, a.purpose, a.scope, a.evaluation_criteria, 
+                a.acceptance_criteria, a.owner, a.department,
+                r.assets, r.threat_sources, r.threat_events, r.vulnerabilities,
+                ra.likelihood, ra.impact,
+                re.risk_priority,
+                rt.mitigation_strategy, rt.mitigation_steps, rt.timeline
+            FROM Assessments a
+            LEFT JOIN Risks r ON a.id = r.assessment_id
+            LEFT JOIN Risk_Analysis ra ON a.id = ra.assessment_id
+            LEFT JOIN Risk_Evaluation re ON a.id = re.assessment_id
+            LEFT JOIN Risk_Treatment rt ON a.id = rt.assessment_id
+            WHERE a.id = %s
+        """, (assessment_id,))
+
+        data = cursor.fetchone()
+
+        if not data:
+            return "Assessment not found", 404
+
+        likelihood_str = reverse_likelihood_mapping.get(data[12], 'very_low')
+        impact_str = reverse_impact_mapping.get(data[13], 'negligible')
+
+        # Konversi data ke dictionary dengan nilai yang sudah dikonversi
+        assessment_data = {
+            'id': data[0],
+            'name': data[1],
+            'purpose': data[2],
+            'scope': data[3],
+            'evaluation_criteria': data[4],
+            'acceptance_criteria': data[5],
+            'owner': data[6],
+            'department': data[7],
+            'assets': data[8],
+            'threat_sources': data[9],
+            'threat_events': data[10],
+            'vulnerabilities': data[11],
+            'likelihood': likelihood_str,  # Gunakan nilai yang sudah dikonversi
+            'impact': impact_str,  # Gunakan nilai yang sudah dikonversi
+            'risk_priority': data[14],
+            'mitigation_strategy': data[15],
+            'mitigation_steps': data[16],
+            'timeline': data[17]
+        }
+
+        return render_template('assessment.html', assessment=assessment_data, edit_mode=True)
+
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 
 @app.route('/result')
@@ -441,8 +590,8 @@ def dashboard():
     total_projects = cursor.fetchone()[0]
 
     cursor.execute("""
-        SELECT id, name, owner, department, created_at 
-        FROM Assessments
+        SELECT a.id, a.name, a.owner, a.department, r.timeline
+        FROM Assessments as a Join Risk_Treatment as r ON a.id = r.assessment_id
     """)
     projects = cursor.fetchall()
 
