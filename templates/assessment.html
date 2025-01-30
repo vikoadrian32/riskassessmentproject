@@ -119,6 +119,87 @@
             border-color: #777;
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Fungsi untuk mengisi form dengan data assessment
+        function populateAssessmentForm(data) {
+            // Context Establishment
+            $('#assessmentName').val(data.name);
+            $('#assessmentPurpose').val(data.purpose);
+            $('#scope').val(data.scope);
+            $('#evaluationCriteria').val(data.evaluation_criteria || '');
+            $('#acceptanceCriteria').val(data.acceptance_criteria || '');
+            $('#owner').val(data.owner);
+            
+            // Department handling
+            if (['IT', 'HR', 'Finance', 'Marketing'].includes(data.department)) {
+                $('#department').val(data.department);
+                $('#otherDepartmentDiv').hide();
+            } else {
+                $('#department').val('Other');
+                $('#otherDepartment').val(data.department);
+                $('#otherDepartmentDiv').show();
+            }
+    
+            // Risk Identification
+            $('#assets').val(data.assets || '');
+            $('#threatSources').val(data.threat_sources || '');
+            $('#threatEvents').val(data.threat_events || '');
+            $('#vulnerabilities').val(data.vulnerabilities || '');
+    
+            // Risk Analysis
+            $('#likelihood').val(data.likelihood || '');
+            $('#impact').val(data.impact || '');
+    
+            // Risk Evaluation
+            $('#riskPriority').val(data.risk_priority || '');
+    
+            // Risk Treatment
+            $('#mitigationStrategy').val(data.mitigation_strategy || '');
+            $('#mitigationSteps').val(data.mitigation_steps || '');
+            $('#timeline').val(data.timeline || '');
+    
+            // Tambahkan hidden input untuk mode edit
+            if (!$('#editModeInput').length) {
+                $('form').prepend('<input type="hidden" id="editModeInput" name="assessment_id">');
+            }
+            $('#editModeInput').val(data.id);
+    
+            // Ubah submit button
+            $('button[type="submit"]').text('Update Assessment');
+        }
+    
+        // Fungsi untuk reset form
+        function resetAssessmentForm() {
+            $('form')[0].reset();
+            $('#editModeInput').remove();
+            $('button[type="submit"]').text('Submit');
+            toggleOtherDepartment(); // Reset department dropdown
+        }
+    
+        $(document).ready(function() {
+            // Tambahkan tombol Edit di tabel existing assessments (jika ada)
+            $('.edit-assessment-btn').on('click', function() {
+                var assessmentId = $(this).data('id');
+                
+                $.ajax({
+                    url: `/assessment/edit/${assessmentId}`,
+                    method: 'GET',
+                    success: function(data) {
+                        populateAssessmentForm(data);
+                    },
+                    error: function() {
+                        alert('Failed to load assessment data');
+                    }
+                });
+            });
+    
+            // Tambahkan tombol Cancel Edit
+            $('form').on('click', '#cancelEditBtn', function() {
+                resetAssessmentForm();
+            });
+        });
+    </script>
 </head>
 <body>
     <!-- Navbar -->
@@ -287,6 +368,10 @@
 
             <!-- Submit Button -->
             <button type="submit" class="btn btn-success">Submit</button>
+
+            <button type="button" id="cancelEditBtn" class="btn btn-secondary mt-3" style="display:none;">
+                Cancel Edit
+            </button>
         </form>
     </div>
 

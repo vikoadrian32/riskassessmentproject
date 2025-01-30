@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+import io
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
 import mysql.connector
 import requests
 import base64
@@ -8,6 +9,16 @@ import pandas as pd
 import plotly.io as pio
 import os
 from dotenv import load_dotenv
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.units import inch
+from PIL import Image as PILImage
+from io import BytesIO
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 load_dotenv()
 
@@ -33,7 +44,7 @@ conn = mysql.connector.connect(
     host="127.0.0.1",
     port="3306",
     user="root",
-    password="herosenin123",
+    password="",
     database="riskassessment"
 )
 cursor = conn.cursor()
@@ -121,6 +132,147 @@ dash_app.layout = html.Div([
     })
 ])
 
+
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    try:
+        # Ambil data dari database
+        cursor.execute("""
+            SELECT a.name, a.purpose, a.scope, a.owner, a.department,
+                   r.assets, r.threat_sources, r.threat_events, r.vulnerabilities,
+                   ra.likelihood, ra.impact, ra.overall_risk_level,
+                   rt.mitigation_strategy, rt.mitigation_steps, rt.timeline
+            FROM Assessments a
+            JOIN Risks r ON a.id = r.assessment_id
+            JOIN Risk_Analysis ra ON a.id = ra.assessment_id
+            JOIN Risk_Treatment rt ON a.id = rt.assessment_id
+        """)
+        assessments = cursor.fetchall()
+
+        # Ambil data untuk risk heatmap dan distribution
+        cursor.execute("""
+            SELECT likelihood, impact, overall_risk_level 
+            FROM Risk_Analysis
+        """)
+        risk_data = cursor.fetchall()
+
+        # Buat DataFrame untuk visualisasi
+        df_risk = pd.DataFrame(risk_data, columns=['Likelihood', 'Impact', 'Risk Level'])
+
+        # Fungsi untuk membuat Risk Heatmap
+        def create_risk_heatmap(df):
+            plt.figure(figsize=(10, 8))
+            pivot_table = pd.pivot_table(df, values='Risk Level', 
+                                         index='Likelihood', 
+                                         columns='Impact', 
+                                         aggfunc='count')
+            
+            sns.heatmap(pivot_table, annot=True, cmap='YlOrRd', fmt='g')
+            plt.title('Risk Heatmap')
+            plt.tight_layout()
+            
+            # Simpan plot ke buffer
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png')
+            buffer.seek(0)
+            plt.close()
+            return buffer
+
+        # Fungsi untuk membuat Risk Distribution
+        def create_risk_distribution(df):
+            plt.figure(figsize=(10, 6))
+            df['Risk Level'].value_counts().plot(kind='bar')
+            plt.title('Risk Distribution')
+            plt.xlabel('Risk Level')
+            plt.ylabel('Number of Risks')
+            plt.tight_layout()
+            
+            # Simpan plot ke buffer
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png')
+            buffer.seek(0)
+            plt.close()
+            return buffer
+
+        # Buat PDF di memory
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Tambahkan judul
+        title = Paragraph("Comprehensive Risk Assessment Report", styles['Title'])
+        story.append(title)
+        story.append(Spacer(1, 12))
+
+        # Proses setiap assessment
+        for assessment in assessments:
+            story.append(Paragraph(f"Project Name: {assessment[0]}", styles['Heading2']))
+            story.append(Paragraph(f"Purpose: {assessment[1]}", styles['Normal']))
+            story.append(Paragraph(f"Scope: {assessment[2]}", styles['Normal']))
+            story.append(Paragraph(f"Owner: {assessment[3]}", styles['Normal']))
+            story.append(Paragraph(f"Department: {assessment[4]}", styles['Normal']))
+            story.append(Spacer(1, 12))
+
+            # Tambahkan detail risiko
+            story.append(Paragraph("Risk Details:", styles['Heading3']))
+            story.append(Paragraph(f"Assets: {assessment[5]}", styles['Normal']))
+            story.append(Paragraph(f"Threat Sources: {assessment[6]}", styles['Normal']))
+            story.append(Paragraph(f"Threat Events: {assessment[7]}", styles['Normal']))
+            story.append(Paragraph(f"Vulnerabilities: {assessment[8]}", styles['Normal']))
+            story.append(Spacer(1, 12))
+
+            # Tambahkan analisis risiko
+            story.append(Paragraph("Risk Analysis:", styles['Heading3']))
+            story.append(Paragraph(f"Likelihood: {assessment[9]}", styles['Normal']))
+            story.append(Paragraph(f"Impact: {assessment[10]}", styles['Normal']))
+            story.append(Paragraph(f"Overall Risk Level: {assessment[11]}", styles['Normal']))
+            story.append(Spacer(1, 12))
+
+            # Tambahkan strategi mitigasi
+            story.append(Paragraph("Risk Mitigation:", styles['Heading3']))
+            story.append(Paragraph(f"Strategy: {assessment[12]}", styles['Normal']))
+            story.append(Paragraph(f"Steps: {assessment[13]}", styles['Normal']))
+            story.append(Paragraph(f"Timeline: {assessment[14]}", styles['Normal']))
+            story.append(Spacer(1, 20))
+
+        # Tambahkan Risk Heatmap
+        story.append(Paragraph("Risk Heatmap", styles['Heading2']))
+        heatmap_buffer = create_risk_heatmap(df_risk)
+        heatmap_img = Image(heatmap_buffer, width=6*inch, height=4*inch)
+        story.append(heatmap_img)
+        story.append(Spacer(1, 12))
+
+        # Tambahkan Risk Distribution
+        story.append(Paragraph("Risk Distribution", styles['Heading2']))
+        distribution_buffer = create_risk_distribution(df_risk)
+        distribution_img = Image(distribution_buffer, width=6*inch, height=4*inch)
+        story.append(distribution_img)
+        story.append(Spacer(1, 12))
+
+        # Tambahkan ringkasan statistik
+        story.append(Paragraph("Risk Statistics", styles['Heading2']))
+        risk_stats = df_risk['Risk Level'].value_counts()
+        for level, count in risk_stats.items():
+            story.append(Paragraph(f"{level} Risks: {count}", styles['Normal']))
+
+        # Build PDF
+        doc.build(story)
+        
+        # Ambil nilai PDF
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        # Kirim PDF sebagai response
+        return send_file(
+            BytesIO(pdf),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='comprehensive_risk_assessment_report.pdf'
+        )
+
+    except Exception as e:
+        return f"Error generating PDF: {str(e)}", 500
 
 @app.route('/')
 def home():

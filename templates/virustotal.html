@@ -10,7 +10,7 @@
     <style>
         body {
             background-color: #111;
-            color: #8fd6a3; /* Neon green for hacker vibe */
+            color: #8fd6a3;
             font-family: 'Courier New', Courier, monospace;
         }
         .container {
@@ -99,6 +99,48 @@
         .modal .modal-content {
             background-color: #222;
         }
+        .verdict-summary {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .verdict-box {
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 150px;
+            text-align: center;
+        }
+        .verdict-box h4 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .verdict-box p {
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
+        /* New styles for view details button */
+        .view-details-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .view-details-btn:hover {
+            transform: scale(1.05);
+        }
+        /* Hide analysis results by default */
+        .analysis-results {
+            display: none;
+            transition: all 0.3s ease;
+        }
+        .analysis-results.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -148,80 +190,136 @@
                 {{ threats.error }}
             </div>
         {% else %}
+            <!-- New Verdict Summary Section -->
+            {% set verdicts = {'harmless': 0, 'malicious': 0, 'suspicious': 0, 'undetected': 0} %}
+            {% for engine, details in threats['data']['attributes']['last_analysis_results'].items() %}
+                {% if details['category'] in verdicts %}
+                    {% set _ = verdicts.update({details['category']: verdicts[details['category']] + 1}) %}
+                {% endif %}
+            {% endfor %}
+            
             <div class="card mt-4 shadow">
                 <div class="card-body">
-                    <h5 class="card-title text-center">Analysis Results</h5>
-                    <table class="table table-bordered mt-4">
-                        <thead>
-                            <tr>
-                                <th>Engine</th>
-                                <th>Verdict</th>
-                                <th>Additional Information</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for engine, details in threats['data']['attributes']['last_analysis_results'].items() %}
-                            <tr>
-                                <td>{{ engine }}</td>
-                                <td>{{ details['category'] }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#engineInfoModal{{ loop.index }}">
-                                        Engine Info
-                                    </button>
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#verdictInfoModal{{ loop.index }}">
-                                        Verdict Info
-                                    </button>
-                                </td>
-                            </tr>
-            
-                            <!-- Modal for Engine Information -->
-                            <div class="modal fade" id="engineInfoModal{{ loop.index }}" tabindex="-1" aria-labelledby="engineInfoModalLabel" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="engineInfoModalLabel">Engine Information</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>The engine {{ engine }} is a security tool used to detect and analyze potential threats in files or URLs. It uses its own detection methods, signature databases, and analysis techniques to identify possible malware or suspicious activity. The result from this engine can help determine the overall verdict on the sample.</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <h5 class="card-title text-center mb-4">Verdict Summary</h5>
+                    <div class="verdict-summary">
+                        <div class="verdict-box harmless">
+                            <h4>{{ verdicts['harmless'] }}</h4>
+                            <p>Harmless</p>
+                        </div>
+                        <div class="verdict-box malicious">
+                            <h4>{{ verdicts['malicious'] }}</h4>
+                            <p>Malicious</p>
+                        </div>
+                        <div class="verdict-box suspicious">
+                            <h4>{{ verdicts['suspicious'] }}</h4>
+                            <p>Suspicious</p>
+                        </div>
+                        <div class="verdict-box undetected">
+                            <h4>{{ verdicts['undetected'] }}</h4>
+                            <p>Undetected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Details Button -->
+            <button class="btn btn-primary view-details-btn" onclick="toggleDetails()">
+                <i class="fas fa-eye"></i> View Details
+            </button>
+
+            <!-- Analysis Results (Initially Hidden) -->
+            <div class="analysis-results" id="analysisResults">
+                <div class="card mt-4 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Analysis Results</h5>
+                        <table class="table table-bordered mt-4">
+                            <thead>
+                                <tr>
+                                    <th>Engine</th>
+                                    <th>Verdict</th>
+                                    <th>Additional Information</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for engine, details in threats['data']['attributes']['last_analysis_results'].items() %}
+                                <tr>
+                                    <td>{{ engine }}</td>
+                                    <td>{{ details['category'] }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#engineInfoModal{{ loop.index }}">
+                                            Engine Info
+                                        </button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#verdictInfoModal{{ loop.index }}">
+                                            Verdict Info
+                                        </button>
+                                    </td>
+                                </tr>
+                
+                                <!-- Modal for Engine Information -->
+                                <div class="modal fade" id="engineInfoModal{{ loop.index }}" tabindex="-1" aria-labelledby="engineInfoModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="engineInfoModalLabel">Engine Information</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>The engine {{ engine }} is a security tool used to detect and analyze potential threats in files or URLs. It uses its own detection methods, signature databases, and analysis techniques to identify possible malware or suspicious activity. The result from this engine can help determine the overall verdict on the sample.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-            
-                            <!-- Modal for Verdict Information -->
-                            <div class="modal fade" id="verdictInfoModal{{ loop.index }}" tabindex="-1" aria-labelledby="verdictInfoModalLabel" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="verdictInfoModalLabel">Verdict Information</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>The verdict given by the engine (Clean, Suspicious, or Malicious) is the result of the analysis of the file or URL. If the verdict is 'Clean', the sample is generally safe. If the verdict is 'Malicious', the sample is considered harmful, and action should be taken to avoid it. If the verdict is 'Suspicious', the sample might be harmful, but it needs further analysis to confirm.</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                
+                                <!-- Modal for Verdict Information -->
+                                <div class="modal fade" id="verdictInfoModal{{ loop.index }}" tabindex="-1" aria-labelledby="verdictInfoModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="verdictInfoModalLabel">Verdict Information</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>The verdict given by the engine (Clean, Suspicious, or Malicious) is the result of the analysis of the file or URL. If the verdict is 'Clean', the sample is generally safe. If the verdict is 'Malicious', the sample is considered harmful, and action should be taken to avoid it. If the verdict is 'Suspicious', the sample might be harmful, but it needs further analysis to confirm.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         {% endif %}
     {% endif %}
 </div>
+
+<!-- Scripts -->
 <script>
-    // Tooltip functionality (optional)
+    // Tooltip functionality
     $(function () {
-            $('[data-bs-toggle="tooltip"]').tooltip();
-        });
+        $('[data-bs-toggle="tooltip"]').tooltip();
+    });
+
+    // Function to toggle analysis details
+    function toggleDetails() {
+        const resultsDiv = document.getElementById('analysisResults');
+        const button = document.querySelector('.view-details-btn');
+        
+        if (resultsDiv.classList.contains('show')) {
+            resultsDiv.classList.remove('show');
+            button.innerHTML = '<i class="fas fa-eye"></i> View Details';
+        } else {
+            resultsDiv.classList.add('show');
+            button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Details';
+        }
+    }
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0-alpha1/js/bootstrap.bundle.min.js"></script>
