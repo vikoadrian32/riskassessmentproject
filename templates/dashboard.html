@@ -135,7 +135,7 @@
                         <th>Name</th>
                         <th>Owner</th>
                         <th>Department</th>
-                        <th>Created Date</th>
+                        <th>Timeline</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -155,11 +155,12 @@
                                 <a href="/edit_assessment/{{ project[0] }}" class="btn btn-primary action-btn" title="Edit Assessment">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button onclick="confirmDelete(project[0])" class="btn btn-danger action-btn" title="Delete Assessment">
+                                <button onclick="confirmDelete({{project[0]}})" class="btn btn-danger action-btn" title="Delete Assessment">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <div class="generate-pdf-section">
                                     <form action="{{ url_for('generate_pdf') }}" method="post">
+                                        <input type="hidden" name="assessment_id" value="{{ project[0] }}">
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-file-pdf"></i>
                                         </button>
@@ -194,7 +195,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
                     <form id="deleteForm" action="/delete_assessment" method="POST" style="display: inline;">
-                        <input type="hidden" id="deleteAssessmentId" name="assessment_id" value="">
+                        <input type="hidden" id="deleteAssessmentId" name="assessment_id" value="deleteAssessmentId">
                         <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
                 </div>
