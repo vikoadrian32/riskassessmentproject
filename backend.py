@@ -44,7 +44,7 @@ conn = mysql.connector.connect(
     host="127.0.0.1",
     port="3306",
     user="root",
-    password="herosenin123",
+    password="",
     database="riskassessment"
 )
 cursor = conn.cursor()
@@ -538,50 +538,114 @@ def result():
     if not assessment_id:
         return "Invalid assessment ID."
 
+    # Ambil data assessment utama
+    cursor.execute("""
+        SELECT 
+            a.name, a.purpose, a.scope,
+            ra.likelihood, ra.impact, ra.overall_risk_level,
+            rt.mitigation_strategy, rt.mitigation_steps, rt.timeline
+        FROM Assessments a
+        JOIN Risk_Analysis ra ON a.id = ra.assessment_id
+        JOIN Risk_Treatment rt ON a.id = rt.assessment_id
+        WHERE a.id = %s
+    """, (assessment_id,))
+    assessment_data = cursor.fetchone()
+
+    if not assessment_data:
+        return "No data available for this assessment ID."
+
+    # Ekstrak data untuk visualisasi
     cursor.execute("""
         SELECT likelihood, impact, overall_risk_level
         FROM Risk_Analysis
         WHERE assessment_id = %s
     """, (assessment_id,))
-    data = cursor.fetchall()
+    risk_data = cursor.fetchall()
 
-    if not data:
-        return "No data available for this assessment ID."
-
-    df = pd.DataFrame(data, columns=["Likelihood", "Impact", "Risk Level"])
+    # Konversi data ke DataFrame
+    df = pd.DataFrame(risk_data, columns=["Likelihood", "Impact", "Risk Level"])
     df['Likelihood'] = pd.to_numeric(df['Likelihood'], errors='coerce').fillna(0).astype(int)
     df['Impact'] = pd.to_numeric(df['Impact'], errors='coerce').fillna(0).astype(int)
     df['Risk Level'] = df['Impact'] * df['Likelihood']
 
-    # Enhanced visualizations
+    # Enhanced visualizations dengan tema gelap
+    dark_template = dict(
+        layout=dict(
+            paper_bgcolor='#1a1a1a',
+            plot_bgcolor='#1a1a1a',
+            font=dict(color='#8fd6a3'),
+            title=dict(font=dict(color='#8fd6a3')),
+            xaxis=dict(
+                gridcolor='#2d2d2d',
+                zerolinecolor='#2d2d2d',
+                tickfont=dict(color='#8fd6a3')
+            ),
+            yaxis=dict(
+                gridcolor='#2d2d2d',
+                zerolinecolor='#2d2d2d',
+                tickfont=dict(color='#8fd6a3')
+            )
+        )
+    )
+
+    # Risk Heatmap
     heatmap_fig = px.scatter(
         df,
         x='Impact',
         y='Likelihood',
         color='Risk Level',
         title="Risk Heatmap",
-        template="plotly_white"
+        color_continuous_scale='YlOrRd'
     )
-    heatmap_fig.update_layout(
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        font={'size': 14}
-    )
+    heatmap_fig.update_layout(dark_template['layout'])
 
-    category_pie = px.pie(
+    # Risk Distribution Pie Chart
+    distribution_fig = px.pie(
         df,
         names='Risk Level',
         title="Distribution of Risks by Risk Level",
-        template="plotly_white"
+        color_discrete_sequence=px.colors.sequential.Viridis
     )
-    category_pie.update_layout(
-        showlegend=True,
-        font={'size': 14}
+    distribution_fig.update_layout(
+        dark_template['layout'],
+        legend=dict(
+            font=dict(color='#8fd6a3'),
+            bgcolor='#1a1a1a',
+            bordercolor='#2d2d2d'
+        )
     )
 
+    # Konversi likelihood dan impact ke string yang lebih deskriptif
+    likelihood_mapping = {
+        0: 'Very Low',
+        1: 'Low', 
+        2: 'Moderate',
+        3: 'High',
+        4: 'Very High'
+    }
+
+    impact_mapping = {
+        0: 'Negligible',
+        1: 'Limited',
+        2: 'Serious', 
+        3: 'Major',
+        4: 'Catastrophic'
+    }
+
     return render_template('result.html',
-                           heatmap_fig=heatmap_fig.to_html(),
-                           category_pie=category_pie.to_html())
+        assessment_id=assessment_id,
+        assessment_name=assessment_data[0],
+        purpose=assessment_data[1],
+        scope=assessment_data[2],
+        likelihood=likelihood_mapping.get(assessment_data[3], 'N/A'),
+        impact=impact_mapping.get(assessment_data[4], 'N/A'),
+        overall_risk_level=assessment_data[5],
+        mitigation_strategy=assessment_data[6],
+        mitigation_steps=assessment_data[7],
+        timeline=assessment_data[8],
+        heatmap_fig=heatmap_fig.to_html(full_html=False),
+        distribution_fig=distribution_fig.to_html(full_html=False)
+    )
 
 
 @app.route('/dashboard')
